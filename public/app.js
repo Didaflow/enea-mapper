@@ -105,17 +105,24 @@ async function run() {
   $('map-section').style.display = 'none';
   $('questions-section').style.display = 'none';
 
+  const searchEnabled = $('opt-search') && $('opt-search').checked;
   const btn = $('btn-run');
-  btn.disabled = true; btn.textContent = 'Raccolgo le evidenze…';
-  setPhase(1, 'active'); setPhase(2, 'idle');
+  btn.disabled = true;
+  btn.textContent = searchEnabled ? 'Raccolgo le evidenze…' : 'Costruisco la mappa…';
+  setPhase(1, searchEnabled ? 'active' : 'done'); setPhase(2, 'idle');
   $('loading').style.display = 'block';
 
   try {
-    // Phase 1 — evidence
-    const ev = await postJSON('/api/evidence', { name, use, context });
-    state.sources = ev.sources || [];
-    state.accessed = ev.accessed || new Date().toISOString().slice(0, 10);
-    setPhase(1, 'done');
+    // Phase 1 — evidence (optional: needs high API limits)
+    if (searchEnabled) {
+      const ev = await postJSON('/api/evidence', { name, use, context });
+      state.sources = ev.sources || [];
+      state.accessed = ev.accessed || new Date().toISOString().slice(0, 10);
+      setPhase(1, 'done');
+    } else {
+      state.sources = [];
+      state.accessed = new Date().toISOString().slice(0, 10);
+    }
     renderSources();
     $('sources-section').style.display = 'block';
 
