@@ -77,15 +77,40 @@ Microsoft–OpenAI arrangements) are acceptable when documented by sources.
 Verify: no truncation, schema-valid JSON on both calls, all five indicators
 covered by at least one edge, sources clickable, accessed dates stamped.
 
+## Cost & abuse guardrails (read before publishing)
+
+Each analysis calls `claude-sonnet-4-6` (~$3 / 1M input, $15 / 1M output) plus a
+few web searches. A typical run costs **~$0.15**, worst case **~$0.30** — the
+dominant, variable cost is the web-search evidence phase. The real risk of a public
+endpoint is **unbounded volume**, not the per-run price. Three defenses are built in
+and tunable via `.env` (see `.env.example`):
+
+- **Result cache** (`CACHE_TTL_SECONDS`) — identical requests (everyone tries
+  "GitHub Copilot") are served from cache; only cache misses cost money.
+- **Per-IP rate limit** (`RATE_LIMIT_PER_IP` / `RATE_WINDOW_SECONDS`) — caps loops
+  from a single client (HTTP 429 when exceeded).
+- **Daily budget** (`DAILY_API_BUDGET`) — a hard cap on billable runs per UTC day;
+  past it the service returns 429 until the next day, bounding daily spend.
+- **`WEB_SEARCH_MAX_USES`** — caps the variable search cost per run (default 4).
+
+**Do this before going public:** (1) use a **dedicated Anthropic API key** in a
+workspace with a **monthly spend limit** set in the Console — the ultimate safety
+net; (2) keep the tool behind the Didaflow site / an access code rather than fully
+open. State is per-process: run a **single worker** (default), or back the
+guardrails with Redis for multi-worker deployments.
+
+`GET /api/health` reports `daily_budget_remaining`.
+
 ## Files
 
 ```
 server.py            FastAPI app + endpoints + static serving + .env loader
 anthropic_client.py  Anthropic proxy: forced tool use, search→structure, retry
 prompts.py           Prompts, submit_result JSON schemas, validators (pure stdlib)
+limits.py            Cache + per-IP rate limit + daily budget (in-memory)
 public/              index.html · styles.css · app.js  (the SPA)
 requirements.txt     fastapi · uvicorn · httpx
-.env.example         ANTHROPIC_API_KEY template
+.env.example         key + guardrail settings
 ```
 
 ## Notes

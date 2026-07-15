@@ -20,7 +20,9 @@ import prompts
 
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 MODEL = "claude-sonnet-4-6"
-WEB_SEARCH_TOOL = {"type": "web_search_20260209", "name": "web_search", "max_uses": 6}
+# max_uses caps the (variable) web-search cost of the evidence phase; tunable via env.
+WEB_SEARCH_MAX_USES = int(os.environ.get("WEB_SEARCH_MAX_USES", "4"))
+WEB_SEARCH_TOOL = {"type": "web_search_20260209", "name": "web_search", "max_uses": WEB_SEARCH_MAX_USES}
 MAX_TOKENS = 4096
 ANTHROPIC_VERSION = "2023-06-01"
 
