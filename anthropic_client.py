@@ -21,10 +21,14 @@ import prompts
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 MODEL = "claude-sonnet-4-6"
 # max_uses caps the (variable) web-search cost of the evidence phase; tunable via env.
-WEB_SEARCH_MAX_USES = int(os.environ.get("WEB_SEARCH_MAX_USES", "4"))
+WEB_SEARCH_MAX_USES = int(os.environ.get("WEB_SEARCH_MAX_USES", "3"))
 WEB_SEARCH_TOOL = {"type": "web_search_20260209", "name": "web_search", "max_uses": WEB_SEARCH_MAX_USES}
 MAX_TOKENS = 4096
 ANTHROPIC_VERSION = "2023-06-01"
+# Web search is slow (multiple server-side searches per call) — give it headroom;
+# the map call is fast. Tunable via env.
+EVIDENCE_TIMEOUT = float(os.environ.get("EVIDENCE_TIMEOUT", "300"))
+MAP_TIMEOUT = float(os.environ.get("MAP_TIMEOUT", "120"))
 
 
 class AnthropicError(RuntimeError):
@@ -42,8 +46,23 @@ def _headers():
     }
 
 
-async def _post(client: httpx.AsyncClient, body: dict) -> dict:
-    resp = await client.post(ANTHROPIC_URL, headers=_headers(), json=body, timeout=120.0)
+async def _post(client: httpx.AsyncClient, body: dict, timeout: float = MAP_TIMEOUT) -> dict:
+    try:
+        resp = await client.post(ANTHROPIC_URL, headers=_headers(), json=body, timeout=timeout)
+    except httpx.TimeoutException:
+        raise AnthropicError(
+            "La ricerca ha impiegato troppo tempo (timeout). Riprova, o riduci WEB_SEARCH_MAX_USES."
+        )
+    except httpx.HTTPError as e:
+        raise AnthropicError(f"Errore di rete verso l'API Anthropic: {e}")
+    if resp.status_code == 429:
+        ra = resp.headers.get("retry-after", "")
+        mins = f" tra ~{max(1, int(ra) // 60)} min" if ra.isdigit() else " tra qualche minuto"
+        raise AnthropicError(
+            "Limite di frequenza dell'account Anthropic raggiunto (tier basso: "
+            "10k token/min). La ricerca web supera facilmente questo limite. "
+            f"Riprova{mins}, oppure aumenta il tier/credito nella Console Anthropic."
+        )
     if resp.status_code >= 400:
         detail = resp.text[:600]
         raise AnthropicError(f"Anthropic API {resp.status_code}: {detail}")
@@ -114,7 +133,7 @@ async def gather_evidence(name, use, context):
                 "tool_choice": {"type": "auto"},
                 "messages": messages,
             }
-            data = await _post(client, body)
+            data = await _post(client, body, timeout=EVIDENCE_TIMEOUT)
             if data.get("stop_reason") == "pause_turn":
                 messages.append({"role": "assistant", "content": data.get("content")})
                 continue
@@ -156,5 +175,5 @@ async def _forced_evidence(client, system, messages):
         "tool_choice": {"type": "tool", "name": "submit_result"},
         "messages": messages,
     }
-    data = await _post(client, body)
+    data = await _post(client, body, timeout=EVIDENCE_TIMEOUT)
     return _find_tool_use(data.get("content"))
