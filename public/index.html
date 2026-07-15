@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ENEA Mapper — Didaflow</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <div class="logo-square"></div>
+      <h1>ENEA <em>Mapper</em></h1>
+      <span class="tagline">ETHICAL NETWORK EVALUATION FOR AI · LATOUR × BRUSSEAU</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- Input -->
+    <section class="card" id="input-card">
+      <div class="eyebrow">IL TOOL DA ANALIZZARE</div>
+      <div class="input-grid">
+        <input id="in-name" type="text" placeholder="Nome del tool (es. GitHub Copilot)" />
+        <input id="in-use" type="text" placeholder="Come viene usato in aula? (es. assistente di programmazione negli esercizi di coding)" />
+      </div>
+      <div class="input-row">
+        <input id="in-context" type="text" placeholder="Contesto educativo (es. corso introduttivo di programmazione, laurea triennale)" />
+        <button class="btn-primary" id="btn-run">Genera la mappa ENEA</button>
+      </div>
+      <div class="examples" id="examples">
+        <span class="hint">Prova con:</span>
+      </div>
+      <div id="input-banner"></div>
+    </section>
+
+    <!-- Phase tracker -->
+    <div class="phases" id="phases">
+      <div class="phase" data-phase="1" data-status="idle">
+        <span class="dot"></span>
+        <span>
+          <span class="p-title">Fase 1 — Raccolta evidenze</span><br />
+          <span class="p-sub">ricerca web su fonti primarie</span>
+        </span>
+      </div>
+      <div class="phase" data-phase="2" data-status="idle">
+        <span class="dot"></span>
+        <span>
+          <span class="p-title">Fase 2 — Costruzione mappa</span><br />
+          <span class="p-sub">rete di attori vincolata dalle evidenze</span>
+        </span>
+      </div>
+    </div>
+
+    <div id="loading" style="display:none" class="loading">Seguo gli attori sulla rete…</div>
+
+    <!-- Sources -->
+    <section id="sources-section" style="display:none">
+      <h2 class="section-title">Fonti <em>primarie</em></h2>
+      <p class="section-note">Documentazione ufficiale consultata oggi. Ogni evidenza è vincolo per la mappa.</p>
+      <div id="sources-banner"></div>
+      <div class="sources-grid" id="sources-grid"></div>
+    </section>
+
+    <!-- Map -->
+    <section id="map-section" style="display:none">
+      <h2 class="section-title">La rete di <em id="map-tool-name">—</em></h2>
+      <p class="section-note">Segui la propagazione delle prescrizioni. Notazione dalla Fig. 1 del paper: rettangoli arrotondati = attanti umani; rettangoli = non-umani; parallelogrammi = prescrizioni; frecce = propagazione.</p>
+      <div class="filters" id="filters">
+        <span class="hint">ILLUMINA:</span>
+      </div>
+      <div class="map-layout" id="map-layout">
+        <div>
+          <div class="map-canvas" id="map-canvas"></div>
+          <div class="map-legend">
+            <span class="legend-item"><span class="legend-swatch rounded"></span> umano</span>
+            <span class="legend-item"><span class="legend-swatch"></span> non-umano</span>
+            <span class="legend-item"><span class="legend-swatch presc"></span> prescrizione</span>
+            <span class="legend-item"><span class="legend-swatch tool"></span> tool (double boundary object)</span>
+            <span class="legend-item"><span class="legend-swatch cross"></span> attraversamento di confine</span>
+          </div>
+        </div>
+        <aside id="detail-panel" style="display:none" class="detail-panel"></aside>
+      </div>
+    </section>
+
+    <!-- Questions -->
+    <section id="questions-section" style="display:none">
+      <h2 class="section-title">Interrogazione ENEA <em>sui cinque indicatori</em></h2>
+      <p class="section-note">Le domande sono FISSE: sono il framework (Brusseau). Segui la mappa per rispondere, poi assegna un flag. I verdetti sono segnalazioni per ulteriore indagine, non condanne.</p>
+      <div class="q-grid" id="q-grid"></div>
+      <div class="export-row">
+        <button class="btn-dark" id="btn-export">Copia il report ENEA (markdown)</button>
+        <span class="hint">Attori per quadrante + propagazione + domande, flag e note + bibliografia, pronti da incollare.</span>
+      </div>
+    </section>
+
+    <footer>
+      <span>Framework: Balzan, Munarini &amp; Angeli (2024), «Who Pilots the Copilots? Mapping a Generative AI's Actor-Network to Assess Its Educational Impacts», AIED 2024, LNCS 14830 · Indicatori: Brusseau (2023) · Metodo: Actor-Network Theory (Latour)</span>
+      <span class="footer-brand"><span class="logo-square"></span><b>Didaflow</b></span>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
